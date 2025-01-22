@@ -12,8 +12,17 @@ export default function AdminDashboard() {
 
   async function fetchMovies() {
     try {
-     
-      const response = await fetch('/api/movies');
+      const token = localStorage.getItem('accessToken'); // Recupera o token do localStorage
+      const response = await fetch('/api/movies', {
+        headers: {
+          Authorization: `Bearer ${token}`, // Envia o token no cabeçalho
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch movies');
+      }
+
       const data = await response.json();
       setMovies(data || []);
     } catch (error) {
@@ -28,9 +37,12 @@ export default function AdminDashboard() {
     if (!window.confirm('Are you sure you want to delete this movie?')) return;
 
     try {
-      // Substitua por sua lógica para deletar um filme na API personalizada
+      const token = localStorage.getItem('accessToken');
       const response = await fetch(`/api/movies/${id}`, {
         method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) throw new Error('Failed to delete movie');
@@ -46,13 +58,11 @@ export default function AdminDashboard() {
   async function importFromTMDb() {
     setImporting(true);
     try {
-      // Buscar filmes populares do TMDb
+      const token = localStorage.getItem('accessToken');
       const tmdbMovies = await tmdb.getPopularMovies();
 
-      // Converter e preparar filmes para importação
       const moviesToImport = await Promise.all(
         tmdbMovies.slice(0, 10).map(async (tmdbMovie: any) => {
-          // Buscar vídeos para o trailer
           const videos = await tmdb.getMovieVideos(tmdbMovie.id);
           const movie = tmdb.convertToMovie(tmdbMovie);
           movie.trailer_url = tmdb.getTrailerUrl(videos);
@@ -60,10 +70,12 @@ export default function AdminDashboard() {
         })
       );
 
-      // Inserir filmes na API personalizada
       const response = await fetch('/api/movies/import', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(moviesToImport),
       });
 
@@ -82,7 +94,6 @@ export default function AdminDashboard() {
   const filteredMovies = movies.filter(movie =>
     movie.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
 
   return (
     <div className="space-y-6">

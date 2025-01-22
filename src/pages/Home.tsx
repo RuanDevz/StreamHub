@@ -5,10 +5,6 @@ import { Play, Star } from 'lucide-react';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-const TMDB_API_KEY = '98acb4c551844c564ac58eeb4ef47728';
-const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
-
 interface TMDbMovie {
   id: number;
   title: string;
@@ -35,7 +31,7 @@ export default function Home() {
 
   async function fetchMoviesByGenre(genreId: number): Promise<TMDbMovie[]> {
     const response = await fetch(
-      `${TMDB_BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&language=pt-BR&with_genres=${genreId}`
+      `${import.meta.env.VITE_TMDB_BASE_URL}/discover/movie?api_key=${import.meta.env.VITE_TMDB_API_KEY}&language=pt-BR&with_genres=${genreId}`
     );
     const data = await response.json();
     return data.results;
@@ -43,7 +39,7 @@ export default function Home() {
 
   async function fetchPopularMovies(): Promise<TMDbMovie[]> {
     const response = await fetch(
-      `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&language=pt-BR`
+      `${import.meta.env.VITE_TMDB_BASE_URL}/movie/popular?api_key=${import.meta.env.VITE_TMDB_API_KEY}&language=pt-BR`
     );
     const data = await response.json();
     return data.results;
@@ -51,7 +47,7 @@ export default function Home() {
 
   async function fetchGenres(): Promise<{ id: number; name: string }[]> {
     const response = await fetch(
-      `${TMDB_BASE_URL}/genre/movie/list?api_key=${TMDB_API_KEY}&language=pt-BR`
+      `${import.meta.env.VITE_TMDB_BASE_URL}/genre/movie/list?api_key=${import.meta.env.VITE_TMDB_API_KEY}&language=pt-BR`
     );
     const data = await response.json();
     return data.genres;
@@ -121,7 +117,11 @@ export default function Home() {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Carregando...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
   }
 
   if (error) {
@@ -137,7 +137,7 @@ export default function Home() {
               <div 
                 className="absolute inset-0 bg-cover bg-center"
                 style={{ 
-                  backgroundImage: `url(${TMDB_IMAGE_BASE_URL}/original${movie.backdrop_path})`,
+                  backgroundImage: `url(${import.meta.env.VITE_TMDB_IMAGE_BASE_URL}/original${movie.backdrop_path})`,
                 }}
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50" />
@@ -166,7 +166,7 @@ export default function Home() {
               <Link to={`/movie/${movie.id}`} className="block group">
                 <div className="relative aspect-[2/3] rounded-lg overflow-hidden">
                   <img 
-                    src={`${TMDB_IMAGE_BASE_URL}/w500${movie.poster_path}`} 
+                    src={`${import.meta.env.VITE_TMDB_IMAGE_BASE_URL}/w500${movie.poster_path}`} 
                     alt={movie.title}
                     className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     loading="lazy"
@@ -196,7 +196,7 @@ export default function Home() {
               <Link to={`/movie/${movie.id}`} className="block group">
                 <div className="relative aspect-[2/3] rounded-lg overflow-hidden">
                   <img 
-                    src={`${TMDB_IMAGE_BASE_URL}/w500${movie.poster_path}`} 
+                    src={`${import.meta.env.VITE_TMDB_IMAGE_BASE_URL}/w500${movie.poster_path}`} 
                     alt={movie.title}
                     className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     loading="lazy"
@@ -226,7 +226,7 @@ export default function Home() {
               <Link to={`/movie/${movie.id}`} className="block group">
                 <div className="relative aspect-[2/3] rounded-lg overflow-hidden">
                   <img 
-                    src={`${TMDB_IMAGE_BASE_URL}/w500${movie.poster_path}`} 
+                    src={`${import.meta.env.VITE_TMDB_IMAGE_BASE_URL}/w500${movie.poster_path}`} 
                     alt={movie.title}
                     className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     loading="lazy"

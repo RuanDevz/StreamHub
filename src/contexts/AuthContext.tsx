@@ -2,8 +2,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface User {
   id: string;
-  email: string;
-  username?: string;
+  isAdmin: boolean;
+  username: string;
 }
 
 interface Profile {
@@ -15,8 +15,8 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, username: string) => Promise<void>;
+  signIn: (username: string, password: string) => Promise<void>;
+  signUp: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -28,52 +28,99 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar sessão ativa ao carregar o componente
     checkSession();
   }, []);
+
+  async function fetchProfile(userId: string): Promise<Profile> {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/user/profile/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile');
+      }
+      const profileData = await response.json();
+      return profileData;
+    } catch (error) {
+      console.error('Erro ao buscar perfil:', error);
+      throw error;
+    }
+  }
 
   async function checkSession() {
     setLoading(true);
     try {
-      // Substitua por sua lógica para verificar a sessão do usuário
-      const session = await fetch('/api/auth/session').then((res) => res.json());
-      if (session.user) {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('No token found');
+      }
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/api/auth/session`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch session');
+      }
+      const session = await response.json();
+      if (session?.user) {
         setUser(session.user);
         const userProfile = await fetchProfile(session.user.id);
         setProfile(userProfile);
+      } else {
+        throw new Error('User data not found in session');
       }
     } catch (error) {
       console.error('Erro ao verificar sessão:', error);
+      localStorage.removeItem('accessToken');
+      setUser(null);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
   }
 
-  async function fetchProfile(userId: string): Promise<Profile | null> {
+  async function fetchUserData(token: string): Promise<User> {
     try {
-      // Substitua por sua lógica para buscar o perfil do usuário
-      const response = await fetch(`/api/profile/${userId}`);
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/user/dashboard`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       const data = await response.json();
-      return data;
+      return data.user;
     } catch (error) {
-      console.error('Erro ao buscar perfil:', error);
-      return null;
+      console.error('Erro ao buscar dados do usuário:', error);
+      throw error;
     }
   }
 
-  async function signIn(email: string, password: string) {
+  async function signIn(username: string, password: string) {
     try {
-      // Substitua por sua lógica de autenticação
-      const response = await fetch('/api/auth/signin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/user/auth`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        }
+      );
       const data = await response.json();
-      if (data.user) {
+      if (data.accessToken) {
+        localStorage.setItem('accessToken', data.accessToken);
         setUser(data.user);
-        const userProfile = await fetchProfile(data.user.id);
-        setProfile(userProfile);
+        setProfile({ id: data.user.id, username: data.user.username });
       }
     } catch (error) {
       console.error('Erro ao fazer login:', error);
@@ -81,19 +128,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function signUp(email: string, password: string, username: string) {
+  async function signUp(username: string, password: string) {
     try {
-      // Substitua por sua lógica de registro
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, username }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL}/user/register`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        }
+      );
       const data = await response.json();
-      if (data.user) {
-        setUser(data.user);
-        const userProfile = await fetchProfile(data.user.id);
-        setProfile(userProfile);
+      if (data.msg === 'Usuário criado com sucesso!') {
+        await signIn(username, password);
       }
     } catch (error) {
       console.error('Erro ao registrar:', error);
@@ -103,8 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signOut() {
     try {
-      // Substitua por sua lógica de logout
-      await fetch('/api/auth/signout', { method: 'POST' });
+      localStorage.removeItem('accessToken');
       setUser(null);
       setProfile(null);
     } catch (error) {

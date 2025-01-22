@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Film, Search, User, LogOut, Loader } from 'lucide-react';
+import { Film, Search, User, LogOut, Loader, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-
-const TMDB_API_KEY = '98acb4c551844c564ac58eeb4ef47728';
-const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
 
 export default function Navbar() {
   const { user, profile, signOut } = useAuth();
@@ -34,7 +30,7 @@ export default function Navbar() {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&language=pt-BR&query=${encodeURIComponent(query)}`
+          `${import.meta.env.VITE_TMDB_BASE_URL}/search/movie?api_key=${import.meta.env.VITE_TMDB_API_KEY}&language=pt-BR&query=${encodeURIComponent(query)}`
         );
         const data = await response.json();
         setSuggestions(data.results.slice(0, 5));
@@ -105,7 +101,7 @@ export default function Navbar() {
                     className="flex items-center p-2 hover:bg-gray-600 cursor-pointer transition-colors"
                   >
                     <img
-                      src={`${TMDB_IMAGE_BASE_URL}/w92${movie.poster_path}`}
+                      src={`${import.meta.env.VITE_TMDB_IMAGE_BASE_URL}/w92${movie.poster_path}`}
                       alt={movie.title}
                       className="w-12 h-16 object-cover rounded-lg"
                       onError={(e) => {
@@ -122,13 +118,32 @@ export default function Navbar() {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                {profile?.is_admin && (
-                  <Link
-                    to="/admin"
-                    className="text-gray-300 hover:text-white transition-colors"
-                  >
-                    Admin
-                  </Link>
+                {user.isAdmin && (
+                  <div className="relative group">
+                    <button className="text-gray-300 hover:text-white transition-colors">
+                      <Settings className="h-5 w-5" />
+                    </button>
+                    <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-lg shadow-lg z-50 hidden group-hover:block">
+                      <Link
+                        to="/admin"
+                        className="block px-4 py-2 text-white hover:bg-gray-600 transition-colors"
+                      >
+                        Dashboard
+                      </Link>
+                      <Link
+                        to="/admin/users"
+                        className="block px-4 py-2 text-white hover:bg-gray-600 transition-colors"
+                      >
+                        Manage Users
+                      </Link>
+                      <Link
+                        to="/admin/movies"
+                        className="block px-4 py-2 text-white hover:bg-gray-600 transition-colors"
+                      >
+                        Manage Movies
+                      </Link>
+                    </div>
+                  </div>
                 )}
                 <div className="flex items-center space-x-2">
                   <User className="h-5 w-5" />

@@ -5,19 +5,18 @@ import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Register() {
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
   const [username, setUsername] = React.useState('');
+  const [password, setPassword] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const navigate = useNavigate();
   const { signUp } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      await signUp(email, password, username);
+      await signUp(username, password);
       toast.success('Account created successfully!');
       navigate('/');
     } catch (error) {
@@ -47,20 +46,6 @@ export default function Register() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-2">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               required
             />
